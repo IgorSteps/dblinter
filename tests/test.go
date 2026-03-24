@@ -1,11 +1,8 @@
 package tests
 
-import (
-	"database/sql"
-	"fmt"
-)
+import "database/sql"
 
 func testSomething() {
 	db, _ := sql.Open("none", "none")
-	fmt.Printf("db: %v\n", db)
+	db.SetMaxOpenConns(10)
 }
