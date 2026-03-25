@@ -1,7 +1,6 @@
 package analyser
 
 import (
-	"fmt"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
@@ -14,31 +13,38 @@ var DbLinterAnalyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	// fmt.Println("test")
 	for _, file := range pass.Files {
-		ast.Inspect(file, func(n ast.Node) bool {
-			if stmt, ok := n.(*ast.AssignStmt); ok {
-				fmt.Printf("stmt: %v\n", stmt)
-				fmt.Printf("stmt.Rhs[0]: %v\n", stmt.Rhs[0])
-				if callExpr, ok := stmt.Rhs[0].(*ast.CallExpr); ok {
-					// fmt.Printf("callExpr: %v\n", callExpr)
-					fun := callExpr.Fun
-					if selectExpr, ok := fun.(*ast.SelectorExpr); ok {
-						fmt.Printf("selectExpr: %v\n", selectExpr)
-						var giveMeName *ast.Ident
-						if tbd, ok := selectExpr.X.(*ast.Ident); ok {
-							giveMeName = tbd
-						}
-						if giveMeName.Name == "sql" && selectExpr.Sel.Name == "Open" {
-							pass.Reportf(stmt.Pos(), "found sql.Open")
-						}
-					}
+		ast.Inspect(file, func(node ast.Node) bool {
+			// db.SetMaxOpenWhatever is a ExprStmt
+			// as such confirm node is indeed an ExprStmt
+			exprNode, ok := node.(*ast.ExprStmt)
+			if !ok {
+				return true
+			}
+			// assert that the node is a function call expression
+			call, ok := exprNode.X.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			// assert the function is a selector expression
+			selectExpr, ok := call.Fun.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+
+			if selectExpr.Sel.Name == "SetMaxOpenConns" {
+				// assert the argument in the call is a literal
+				data, ok := call.Args[0].(*ast.BasicLit)
+				if !ok {
+					return true
 				}
+				pass.Reportf(selectExpr.Pos(), "found SetMaxOpenConns with %s", data.Value)
+
+				return false // found it, stop recursing.
 			}
 
 			return true
 		})
 	}
-
 	return nil, nil
 }
