@@ -1,7 +1,6 @@
 package analyser
 
 import (
-	"fmt"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
@@ -20,24 +19,27 @@ func run(pass *analysis.Pass) (any, error) {
 			// as such confirm node is indeed an ExprStmt
 			exprNode, ok := node.(*ast.ExprStmt)
 			if !ok {
-				fmt.Println("node not an expr stmt")
 				return true
 			}
-			fmt.Printf("expr stmt node %v", node)
 			// assert that the node is a function call expression
 			call, ok := exprNode.X.(*ast.CallExpr)
 			if !ok {
 				return true
 			}
-			fmt.Printf("call node %v", call)
 			// assert the function is a selector expression
 			selectExpr, ok := call.Fun.(*ast.SelectorExpr)
 			if !ok {
 				return true
 			}
-			fmt.Printf("selector expression: %s", selectExpr.Sel.Name)
+
 			if selectExpr.Sel.Name == "SetMaxOpenConns" {
-				pass.Reportf(selectExpr.Pos(), "found SetMaxOpenConns")
+				// assert the argument in the call is a literal
+				data, ok := call.Args[0].(*ast.BasicLit)
+				if !ok {
+					return true
+				}
+				pass.Reportf(selectExpr.Pos(), "found SetMaxOpenConns with %s", data.Value)
+
 				return false // found it, stop recursing.
 			}
 
