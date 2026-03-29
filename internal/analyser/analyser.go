@@ -1,6 +1,7 @@
 package analyser
 
 import (
+	"fmt"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
@@ -13,6 +14,8 @@ var DbLinterAnalyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (any, error) {
+	requiredVal := "15"
+	found := false
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
 			// db.SetMaxOpenWhatever is a ExprStmt
@@ -33,18 +36,24 @@ func run(pass *analysis.Pass) (any, error) {
 			}
 
 			if selectExpr.Sel.Name == "SetMaxOpenConns" {
+				found = true
 				// assert the argument in the call is a literal
 				data, ok := call.Args[0].(*ast.BasicLit)
 				if !ok {
 					return true
 				}
-				pass.Reportf(selectExpr.Pos(), "found SetMaxOpenConns with %s", data.Value)
+				if data.Value != "15" {
+					pass.Reportf(selectExpr.Pos(), "SetMaxOpenConns with %s does not match required %s", data.Value, requiredVal)
+				}
 
 				return false // found it, stop recursing.
 			}
 
 			return true
 		})
+	}
+	if !found {
+		return nil, fmt.Errorf("not found")
 	}
 	return nil, nil
 }
