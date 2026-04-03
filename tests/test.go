@@ -4,5 +4,5 @@ import "database/sql"
 
 func testSomething() {
 	db, _ := sql.Open("none", "none")
-	db.SetMaxOpenConns(15)
+	db.SetMaxOpenConns(10)
 }
