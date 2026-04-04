@@ -1,4 +1,4 @@
-package analyser
+package rules
 
 import (
 	"fmt"
@@ -7,14 +7,12 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var DbLinterAnalyzer = &analysis.Analyzer{
-	Name: "dblinter",
-	Doc:  "checks database against best practices",
-	Run:  run,
+type SqlSetMaxOpenConnsAnaliserRunner struct {
+	RequiredMaxOpenConns string
 }
 
-func run(pass *analysis.Pass) (any, error) {
-	requiredVal := "15"
+func (s *SqlSetMaxOpenConnsAnaliserRunner) Run(pass *analysis.Pass) (any, error) {
+	requiredVal := s.RequiredMaxOpenConns
 	found := false
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
@@ -42,7 +40,7 @@ func run(pass *analysis.Pass) (any, error) {
 				if !ok {
 					return true
 				}
-				if data.Value != "15" {
+				if data.Value != requiredVal {
 					pass.Reportf(selectExpr.Pos(), "SetMaxOpenConns with %s does not match required %s", data.Value, requiredVal)
 				}
 
