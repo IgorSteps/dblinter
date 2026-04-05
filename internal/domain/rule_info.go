@@ -1,6 +1,6 @@
-package core
+package domain
 
-type Rule struct {
+type RuleInfo struct {
 	Name        string
 	Description string
 }
