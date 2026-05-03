@@ -11,11 +11,14 @@ type DBLinter struct {
 	Analyser *analysis.Analyzer
 }
 
-func Setup() *DBLinter {
-	config := domain.NewConfig("10")
-	rule := rules.NewMaxOpenConnsRuleFromConfig(config)
+func Setup() (*DBLinter, error) {
+	config, err := NewConfig()
+	if err != nil {
+		return nil, err
+	}
+	rule := rules.NewMaxOpenConnsRuleFromConfig(&config.MaxOpenConnectionsRuleConfig)
 	analyser := analysers.NewDBConnectionAnalyser([]domain.Rule{rule})
 	return &DBLinter{
 		Analyser: analyser,
-	}
+	}, nil
 }

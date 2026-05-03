@@ -13,6 +13,10 @@ const (
 	requiredMethod   = "SetMaxOpenConns"
 )
 
+type MaxOpenConnsRuleConfig struct {
+	MaxOpenConnsRequired string `mapstructure:"max_open_conns_required"`
+}
+
 type MaxOpenConnsRule struct {
 	MaxOpenConnsRequired string
 }
@@ -34,8 +38,8 @@ func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) e
 	return nil
 }
 
-func NewMaxOpenConnsRuleFromConfig(config *domain.Config) *MaxOpenConnsRule {
+func NewMaxOpenConnsRuleFromConfig(config *MaxOpenConnsRuleConfig) *MaxOpenConnsRule {
 	return &MaxOpenConnsRule{
-		MaxOpenConnsRequired: config.MaxOpenConns,
+		MaxOpenConnsRequired: config.MaxOpenConnsRequired,
 	}
 }

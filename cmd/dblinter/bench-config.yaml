@@ -1,0 +1,3 @@
+
+max_open_connections_rule:
+  max_open_conns_required: "10"
