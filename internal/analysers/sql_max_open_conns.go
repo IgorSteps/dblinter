@@ -7,13 +7,13 @@ import (
 )
 
 var MyMaxOpenConnsAnalasyer = &analysis.Analyzer{
-	Name: "MyMaxOpenConnsAnalasyer",
+	Name: "MyMaxOpenConnsAnalyser",
 	Doc:  "Finds the thing",
 	Run:  run,
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	calls := domain.FindDBCalls(pass)
+	calls := domain.FindCallsSites(pass)
 
 	myRule := rules.MaxOpenConnsRule{
 		MaxOpenConnsRequired: 10,

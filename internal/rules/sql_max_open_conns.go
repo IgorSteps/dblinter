@@ -23,7 +23,7 @@ func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) e
 	return nil
 }
 
-func NewMaxOpenConnsRule(config *domain.Config) *MaxOpenConnsRule {
+func NewMaxOpenConnsRuleFromConfig(config *domain.Config) *MaxOpenConnsRule {
 	return &MaxOpenConnsRule{
 		MaxOpenConnsRequired: config.MaxOpenConns,
 	}

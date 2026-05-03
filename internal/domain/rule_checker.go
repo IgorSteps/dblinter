@@ -3,5 +3,5 @@ package domain
 import "golang.org/x/tools/go/analysis"
 
 type Rule interface {
-	Check(pass *analysis.Pass, call CallSite) error
+	Check(pass *analysis.Pass, calls []CallSite) error
 }
