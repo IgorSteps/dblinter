@@ -2,49 +2,40 @@ package rules
 
 import (
 	"fmt"
-	"log"
+	"go/ast"
 
 	"github.com/IgorSteps/dblinter/internal/domain"
 	"golang.org/x/tools/go/analysis"
 )
 
-var (
-	functionList = []*domain.FunctionCall{
-		{
-			Package: "sql",
-			Name:    "SetMaxOpenConns",
-		},
-	}
+const (
+	requiredReceiver = "*database/sql.DB"
+	requiredMethod   = "SetMaxOpenConns"
 )
 
 type MaxOpenConnsRule struct {
-	RuleInfo *domain.RuleInfo
-	Analyser *domain.Analyser
+	MaxOpenConnsRequired string
 }
 
-func (s *MaxOpenConnsRule) Run(pass *analysis.Pass) (any, error) {
-	targets, err := s.Analyser.Run(pass, functionList)
-	if err != nil {
-		log.Printf("max open conns rule failed: %v", err.Error())
-		return nil, err
-	}
+func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) error {
+	for _, call := range calls {
+		if call.Receiver.String() == requiredReceiver && call.Method == requiredMethod {
+			data, ok := call.Args[0].(*ast.BasicLit)
+			if !ok {
+				return fmt.Errorf("argument to SetMaxOpenConns is not basic literal")
+			}
 
-	validationFailuresCounter := 0
-	for _, target := range targets {
-		if target.Arg != "15" {
-			validationFailuresCounter++
+			if data.Value != s.MaxOpenConnsRequired {
+				pass.Reportf(call.Position, "MaxOpenConns must be set to %s, but was set to %s", s.MaxOpenConnsRequired, data.Value)
+			}
 		}
 	}
 
-	if validationFailuresCounter != 0 {
-		return nil, fmt.Errorf("rule not met")
-	}
-	return nil, nil
+	return nil
 }
 
-func NewMaxOpenConnsRule(ruleInfo *domain.RuleInfo, analyser *domain.Analyser) *MaxOpenConnsRule {
+func NewMaxOpenConnsRuleFromConfig(config *domain.Config) *MaxOpenConnsRule {
 	return &MaxOpenConnsRule{
-		RuleInfo: ruleInfo,
-		Analyser: analyser,
+		MaxOpenConnsRequired: config.MaxOpenConns,
 	}
 }
