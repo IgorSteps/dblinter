@@ -10,7 +10,9 @@ func (s *FakeDB) DoSomething(boo int) {}
 
 func testSomething() {
 	db, _ := sql.Open("none", "none")
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(11)
+	db.SetMaxOpenConns(12)
+	db.SetMaxOpenConns(13)
 
 	fakeDB := FakeDB{}
 	fakeDB.SetMaxOpenConns(99)

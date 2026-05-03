@@ -32,6 +32,7 @@ func FindCallsSites(pass *analysis.Pass) []CallSite {
 				Receiver: pass.TypesInfo.TypeOf(selectExpr.X),
 				Method:   selectExpr.Sel.Name,
 				Args:     call.Args,
+				Position: call.Pos(),
 			}
 			callSites = append(callSites, callSite)
 

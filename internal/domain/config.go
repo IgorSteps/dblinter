@@ -1,10 +1,10 @@
 package domain
 
 type Config struct {
-	MaxOpenConns int
+	MaxOpenConns string
 }
 
-func NewConfig(maxOpenConns int) *Config {
+func NewConfig(maxOpenConns string) *Config {
 	return &Config{
 		MaxOpenConns: maxOpenConns,
 	}
