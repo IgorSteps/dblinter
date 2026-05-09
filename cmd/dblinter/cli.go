@@ -22,12 +22,16 @@ func Setup() (*DBLinter, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: this shouldn't happen here, move it elsewhere.
 	cfg, err := config.MaxOpenConns.ToDomain()
 	if err != nil {
 		return nil, err
 	}
-	rule := rules.NewMaxOpenConnsRuleFromConfig(&cfg)
+
+	rule := rules.NewMaxOpenConnsRuleFromConfig(cfg)
 	analyser := analysers.NewDBConnectionAnalyser([]domain.Rule{rule})
+
 	return &DBLinter{
 		Analyser: analyser,
 	}, nil
