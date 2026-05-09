@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+
+	"github.com/IgorSteps/dblinter/internal/adapters/koanfconfig"
 	"github.com/IgorSteps/dblinter/internal/analysers"
 	"github.com/IgorSteps/dblinter/internal/domain"
 	"github.com/IgorSteps/dblinter/internal/rules"
@@ -12,11 +15,18 @@ type DBLinter struct {
 }
 
 func Setup() (*DBLinter, error) {
-	config, err := NewConfig()
+	userConfigPath := ""
+	flag.StringVar(&userConfigPath, "config", "", "optional path to config file")
+	flag.Parse()
+	config, err := koanfconfig.LoadConfig(userConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	rule := rules.NewMaxOpenConnsRuleFromConfig(&config.MaxOpenConnectionsRuleConfig)
+	cfg, err := config.MaxOpenConns.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+	rule := rules.NewMaxOpenConnsRuleFromConfig(&cfg)
 	analyser := analysers.NewDBConnectionAnalyser([]domain.Rule{rule})
 	return &DBLinter{
 		Analyser: analyser,
