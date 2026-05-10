@@ -1,11 +1,30 @@
 package domain
 
-type Config struct {
-	MaxOpenConns string
+import (
+	"fmt"
+)
+
+// RuntimeConfig is the runtime configuration used by db linter.
+type RuntimeConfig struct {
+	MaxOpenConns MaxOpenConnsConfig
 }
 
-func NewConfig(maxOpenConns string) *Config {
-	return &Config{
-		MaxOpenConns: maxOpenConns,
+// MaxOpenConnsConfig is the runtime configuration used by MaxOpenConns rule.
+type MaxOpenConnsConfig struct {
+	Enabled  bool
+	Required int
+}
+
+// NewMaxOpenConnsConfig returns new runtime configuration for the MaxOpenConns rule.
+func NewMaxOpenConnsConfig(enabled bool, required int) (MaxOpenConnsConfig, error) {
+	if required <= 0 {
+		return MaxOpenConnsConfig{}, fmt.Errorf("required must be > 0")
 	}
+
+	cfg := MaxOpenConnsConfig{
+		Enabled:  enabled,
+		Required: required,
+	}
+
+	return cfg, nil
 }

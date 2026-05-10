@@ -14,10 +14,15 @@ const (
 )
 
 type MaxOpenConnsRule struct {
-	MaxOpenConnsRequired string
+	Enabled  bool
+	Required int
 }
 
 func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) error {
+	if !s.Enabled {
+		return nil
+	}
+
 	for _, call := range calls {
 		if call.Receiver.String() == requiredReceiver && call.Method == requiredMethod {
 			data, ok := call.Args[0].(*ast.BasicLit)
@@ -25,8 +30,8 @@ func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) e
 				return fmt.Errorf("argument to SetMaxOpenConns is not basic literal")
 			}
 
-			if data.Value != s.MaxOpenConnsRequired {
-				pass.Reportf(call.Position, "MaxOpenConns must be set to %s, but was set to %s", s.MaxOpenConnsRequired, data.Value)
+			if data.Value != fmt.Sprint(s.Required) {
+				pass.Reportf(call.Position, "MaxOpenConns: must be set to %d, but was set to %s", s.Required, data.Value)
 			}
 		}
 	}
@@ -34,8 +39,9 @@ func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) e
 	return nil
 }
 
-func NewMaxOpenConnsRuleFromConfig(config *domain.Config) *MaxOpenConnsRule {
+func NewMaxOpenConnsRuleFromConfig(config domain.MaxOpenConnsConfig) *MaxOpenConnsRule {
 	return &MaxOpenConnsRule{
-		MaxOpenConnsRequired: config.MaxOpenConns,
+		Enabled:  config.Enabled,
+		Required: config.Required,
 	}
 }
