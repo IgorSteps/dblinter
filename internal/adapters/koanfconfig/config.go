@@ -14,26 +14,33 @@ type KoanfConfig struct {
 	MaxOpenConns *MaxOpenConnsConfig `koanf:"max_open_conns"`
 }
 
-// LoadConfig loads default and user configs (if provided) and merges them.
-func LoadConfig(userPath string) (KoanfConfig, error) {
+// LoadConfig loads default and user configs (if provided) and merges them and returns runtime config.
+func LoadConfig(userPath string) (domain.RuntimeConfig, error) {
 	k := koanf.New(".")
 
 	if err := k.Load(file.Provider("default.yaml"), yaml.Parser()); err != nil {
-		return KoanfConfig{}, err
+		return domain.RuntimeConfig{}, err
 	}
 
 	if userPath != "" {
 		if err := k.Load(file.Provider(userPath), yaml.Parser()); err != nil {
-			return KoanfConfig{}, err
+			return domain.RuntimeConfig{}, err
 		}
 	}
 
 	var cfg KoanfConfig
 	if err := k.Unmarshal("", &cfg); err != nil {
-		return KoanfConfig{}, err
+		return domain.RuntimeConfig{}, err
 	}
 
-	return cfg, nil
+	maxOpenConnsConfig, err := cfg.MaxOpenConns.ToDomain()
+	if err != nil {
+		return domain.RuntimeConfig{}, err
+	}
+
+	return domain.RuntimeConfig{
+		MaxOpenConns: maxOpenConnsConfig,
+	}, nil
 }
 
 // MaxOpenConnsConfig holds configurations for MaxOpenConns rule with Koanf tags.
