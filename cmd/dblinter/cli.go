@@ -23,7 +23,7 @@ func Setup() (*DBLinter, error) {
 		return nil, err
 	}
 
-	// TODO: this shouldn't happen here, move it elsewhere.
+	// TODO: this shouldn't happen here, move it elsewhere. But where?
 	cfg, err := config.MaxOpenConns.ToDomain()
 	if err != nil {
 		return nil, err

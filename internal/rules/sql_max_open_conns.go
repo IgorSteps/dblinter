@@ -19,6 +19,10 @@ type MaxOpenConnsRule struct {
 }
 
 func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) error {
+	if !s.Enabled {
+		return nil
+	}
+
 	for _, call := range calls {
 		if call.Receiver.String() == requiredReceiver && call.Method == requiredMethod {
 			data, ok := call.Args[0].(*ast.BasicLit)
