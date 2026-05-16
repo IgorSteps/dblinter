@@ -1,22 +1,21 @@
 package analysers
 
 import (
-	"github.com/IgorSteps/dblinter/internal/domain"
+	"github.com/IgorSteps/dblinter/internal/engine"
 	"golang.org/x/tools/go/analysis"
 )
 
-func NewDBConnectionAnalyser(rules []domain.Rule) *analysis.Analyzer {
+func NewDBConnectionAnalyser(runner *engine.Runner) *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name: "DBConnections",
 		Doc:  "Checks database connections configurations follow best practices.",
 		Run: func(pass *analysis.Pass) (any, error) {
-			calls := domain.FindCallsSites(pass)
+			calls := FindCallsSites(pass)
 
-			for _, rule := range rules {
-				err := rule.Check(pass, calls)
-				if err != nil {
-					return nil, err
-				}
+			issues := runner.Run(calls)
+
+			for _, issue := range issues {
+				pass.Reportf(issue.Pos, "%s", issue.Message)
 			}
 
 			return nil, nil

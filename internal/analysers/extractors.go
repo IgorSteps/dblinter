@@ -1,13 +1,14 @@
-package domain
+package analysers
 
 import (
 	"go/ast"
 
+	"github.com/IgorSteps/dblinter/internal/rules"
 	"golang.org/x/tools/go/analysis"
 )
 
-func FindCallsSites(pass *analysis.Pass) []CallSite {
-	callSites := []CallSite{}
+func FindCallsSites(pass *analysis.Pass) []rules.CallSite {
+	callSites := []rules.CallSite{}
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
 			// A call is an ExprStmt as such confirm node is indeed an ExprStmt.
@@ -28,7 +29,7 @@ func FindCallsSites(pass *analysis.Pass) []CallSite {
 				return true
 			}
 
-			callSite := CallSite{
+			callSite := rules.CallSite{
 				Receiver: pass.TypesInfo.TypeOf(selectExpr.X),
 				Method:   selectExpr.Sel.Name,
 				Args:     call.Args,
