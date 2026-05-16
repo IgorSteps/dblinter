@@ -3,9 +3,10 @@ package rules
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
+	"strconv"
 
-	"github.com/IgorSteps/dblinter/internal/domain"
-	"golang.org/x/tools/go/analysis"
+	"github.com/IgorSteps/dblinter/internal/diagnostics"
 )
 
 const (
@@ -14,34 +15,70 @@ const (
 )
 
 type MaxOpenConnsRule struct {
+	ID       string
+	Doc      string
 	Enabled  bool
 	Required int
 }
 
-func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) error {
+func (s *MaxOpenConnsRule) Check(calls []CallSite) ([]diagnostics.Issue, error) {
 	if !s.Enabled {
-		return nil
+		return nil, nil
 	}
 
+	var issues []diagnostics.Issue
 	for _, call := range calls {
-		if call.Receiver.String() == requiredReceiver && call.Method == requiredMethod {
-			data, ok := call.Args[0].(*ast.BasicLit)
-			if !ok {
-				return fmt.Errorf("argument to SetMaxOpenConns is not basic literal")
-			}
+		if call.Receiver != requiredReceiver {
+			continue
+		}
 
-			if data.Value != fmt.Sprint(s.Required) {
-				pass.Reportf(call.Position, "MaxOpenConns: must be set to %d, but was set to %s", s.Required, data.Value)
-			}
+		if call.Method != requiredMethod {
+			continue
+		}
+
+		if len(call.Args) == 0 {
+			continue
+		}
+
+		arg, ok := call.Args[0].(*ast.BasicLit)
+		if !ok {
+			return []diagnostics.Issue{}, fmt.Errorf("expected argument to be basic literal, but got %v", arg)
+		}
+
+		if arg.Kind != token.INT {
+			return []diagnostics.Issue{}, fmt.Errorf("expected argument to be int, but got %s", arg.Kind.String())
+		}
+
+		actualValue, err := strconv.Atoi(arg.Value)
+		if err != nil {
+			return []diagnostics.Issue{}, err
+		}
+
+		if actualValue != s.Required {
+			issues = append(
+				issues,
+				diagnostics.Issue{
+					RuleID:  s.ID,
+					Doc:     s.Doc,
+					Pos:     call.Position,
+					Message: fmt.Sprintf("MaxOpenConns: must be set to %d, but was set to %d", s.Required, actualValue),
+				},
+			)
 		}
 	}
 
-	return nil
+	return issues, nil
 }
 
-func NewMaxOpenConnsRuleFromConfig(config domain.MaxOpenConnsConfig) *MaxOpenConnsRule {
-	return &MaxOpenConnsRule{
-		Enabled:  config.Enabled,
-		Required: config.Required,
+func NewMaxOpenConnsRule(enabled bool, required int) (*MaxOpenConnsRule, error) {
+	if required <= 0 {
+		return nil, fmt.Errorf("required cannot be less than or equal to 0")
 	}
+
+	return &MaxOpenConnsRule{
+		ID:       "DBL-1",
+		Doc:      "TBD",
+		Enabled:  enabled,
+		Required: required,
+	}, nil
 }

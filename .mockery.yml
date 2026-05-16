@@ -1,0 +1,12 @@
+all: false
+template: testify
+packages:
+  github.com/IgorSteps/dblinter/internal:
+    config:
+      all: true
+      dir: "mocks/{{base .InterfaceDirRelative}}"
+      # Using InterfaceFile as file name puts the file under mocks using its absolute path,
+      # so using base to avoid this issue.
+      filename: "{{base .InterfaceFile}}" 
+      pkgname: "{{.SrcPackageName}}"
+      recursive: true
