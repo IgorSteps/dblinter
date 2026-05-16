@@ -15,12 +15,21 @@ func New(rules []rules.Rule) *Runner {
 	}
 }
 
-func (r *Runner) Run(calls []rules.CallSite) []diagnostics.Issue {
-	var issues []diagnostics.Issue
+func (r *Runner) Run(calls []rules.CallSite) ([]diagnostics.Issue, []error) {
+	var allIssues []diagnostics.Issue
+	var errors []error
 
 	for _, rule := range r.rules {
-		issues = append(issues, rule.Check(calls)...)
+		issues, err := rule.Check(calls)
+		if err != nil {
+			// Prefer to collate all the errors rather than exiting early,
+			// so that the user doesn't stuck in a fix/rerun cycle.
+			errors = append(errors, err)
+			continue
+		}
+
+		allIssues = append(allIssues, issues...)
 	}
 
-	return issues
+	return allIssues, errors
 }

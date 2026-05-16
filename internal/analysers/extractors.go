@@ -30,7 +30,7 @@ func FindCallsSites(pass *analysis.Pass) []rules.CallSite {
 			}
 
 			callSite := rules.CallSite{
-				Receiver: pass.TypesInfo.TypeOf(selectExpr.X),
+				Receiver: pass.TypesInfo.TypeOf(selectExpr.X).String(),
 				Method:   selectExpr.Sel.Name,
 				Args:     call.Args,
 				Position: call.Pos(),

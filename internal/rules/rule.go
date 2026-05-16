@@ -5,5 +5,5 @@ import (
 )
 
 type Rule interface {
-	Check(calls []CallSite) []diagnostics.Issue
+	Check(calls []CallSite) ([]diagnostics.Issue, error)
 }
