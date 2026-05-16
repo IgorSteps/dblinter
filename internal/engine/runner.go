@@ -16,7 +16,7 @@ func New(rules []rules.Rule) *Runner {
 }
 
 func (r *Runner) Run(calls []rules.CallSite) ([]diagnostics.Issue, []error) {
-	var issues []diagnostics.Issue
+	var allIssues []diagnostics.Issue
 	var errors []error
 
 	for _, rule := range r.rules {
@@ -27,8 +27,9 @@ func (r *Runner) Run(calls []rules.CallSite) ([]diagnostics.Issue, []error) {
 			errors = append(errors, err)
 			continue
 		}
-		issues = append(issues, issues...)
+
+		allIssues = append(allIssues, issues...)
 	}
 
-	return issues, nil
+	return allIssues, errors
 }
