@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 
-	"github.com/IgorSteps/dblinter/internal/domain"
-	"golang.org/x/tools/go/analysis"
+	"github.com/IgorSteps/dblinter/internal/diagnostics"
 )
 
 const (
@@ -18,30 +17,41 @@ type MaxOpenConnsRule struct {
 	Required int
 }
 
-func (s *MaxOpenConnsRule) Check(pass *analysis.Pass, calls []domain.CallSite) error {
+func (s *MaxOpenConnsRule) Check(calls []CallSite) []diagnostics.Issue {
 	if !s.Enabled {
 		return nil
 	}
-
+	var issues []diagnostics.Issue
 	for _, call := range calls {
 		if call.Receiver.String() == requiredReceiver && call.Method == requiredMethod {
 			data, ok := call.Args[0].(*ast.BasicLit)
 			if !ok {
-				return fmt.Errorf("argument to SetMaxOpenConns is not basic literal")
+				//return fmt.Errorf("argument to SetMaxOpenConns is not basic literal")
 			}
 
 			if data.Value != fmt.Sprint(s.Required) {
-				pass.Reportf(call.Position, "MaxOpenConns: must be set to %d, but was set to %s", s.Required, data.Value)
+				issues = append(
+					issues,
+					diagnostics.Issue{
+						RuleID:  "1",
+						Pos:     call.Position,
+						Message: fmt.Sprintf("MaxOpenConns: must be set to %d, but was set to %s", s.Required, data.Value),
+					},
+				)
 			}
 		}
 	}
 
-	return nil
+	return issues
 }
 
-func NewMaxOpenConnsRuleFromConfig(config domain.MaxOpenConnsConfig) *MaxOpenConnsRule {
-	return &MaxOpenConnsRule{
-		Enabled:  config.Enabled,
-		Required: config.Required,
+func NewMaxOpenConnsRule(enabled bool, required int) (*MaxOpenConnsRule, error) {
+	if required <= 0 {
+		return nil, fmt.Errorf("required cannot be less than or equal to 0")
 	}
+
+	return &MaxOpenConnsRule{
+		Enabled:  enabled,
+		Required: required,
+	}, nil
 }
