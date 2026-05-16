@@ -11,5 +11,12 @@ run: build
 	$(DIST_DIR)/$(BINARY_NAME) ./tests/...
 
 ## unit: run unit tests
-unit:
+unit: mocks
 	go test ./... -timeout 30s
+
+## mocks: generate mocks
+mocks:
+	mockery --config .mockery.yml
+
+functional:
+	 $(DIST_DIR)/$(BINARY_NAME) ./tests/...
