@@ -1,6 +1,7 @@
 package engine_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/IgorSteps/dblinter/internal/diagnostics"
@@ -30,4 +31,25 @@ func TestRunner_RunHappyPath(t *testing.T) {
 	// Assert
 	assert.Len(t, errs, 0)
 	assert.Equal(t, expectedIssues, actualIssues)
+}
+
+func TestRunner_RunWithErrors(t *testing.T) {
+	// Assemble
+	testCallSite := []rules.CallSite{}
+	emptyIssues := []diagnostics.Issue(nil)
+	firstMockRule := mock_rules.NewMockRule(t)
+	firstError := errors.New("boom 1")
+	firstMockRule.EXPECT().Check(testCallSite).Return(emptyIssues, firstError).Once()
+	secondError := errors.New("boom 2")
+	secondMockRule := mock_rules.NewMockRule(t)
+	secondMockRule.EXPECT().Check(testCallSite).Return(emptyIssues, secondError).Once()
+	expectedErrors := []error{firstError, secondError}
+	testRunner := engine.New([]rules.Rule{firstMockRule, secondMockRule})
+
+	// Act
+	actualIssues, actualErrors := testRunner.Run(testCallSite)
+
+	// Assert
+	assert.Equal(t, emptyIssues, actualIssues)
+	assert.Equal(t, expectedErrors, actualErrors)
 }

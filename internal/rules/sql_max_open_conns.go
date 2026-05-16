@@ -28,7 +28,7 @@ func (s *MaxOpenConnsRule) Check(calls []CallSite) ([]diagnostics.Issue, error) 
 
 	var issues []diagnostics.Issue
 	for _, call := range calls {
-		if call.Receiver.String() != requiredReceiver {
+		if call.Receiver != requiredReceiver {
 			continue
 		}
 
