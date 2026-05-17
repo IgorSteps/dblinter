@@ -1,0 +1,9 @@
+version: "2"
+
+linters:
+  exclusions:
+    paths-except:
+      # Don't want to lint vendored code.
+      - "vendor/"
+      # There will be linting issues on purpose.
+      - "test/"

@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/**"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # for code checkout
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v 6.4.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      
+       # Cache build artifacts in addition to module cache
+      - name: Cache Go build
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        with:
+          version: v2.12
+        
+      - name: Run vulnerability scan
+        uses: golang/govulncheck-action@31f7c5463448f83528bd771c2d978d940080c9fd # unknown tag
+        with:
+          go-package: ./...
+      
+      - name: Run unit tests
+        run: make unit
+      
+      - name: Build
+        run: make build
+      
+      # - name: Run FTs
+      #   run: make functional
